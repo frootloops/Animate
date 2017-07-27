@@ -12,15 +12,16 @@ import PlaygroundSupport
 public struct Animation {
     public let duration: TimeInterval
     public let closure: (UIView) -> Void
+    public let completion: () -> Void
 }
 
 public extension Animation {
     static func fadeIn(duration: TimeInterval = 0.3) -> Animation {
-        return Animation(duration: duration, closure: { $0.alpha = 1 })
+        return Animation(duration: duration, closure: { $0.alpha = 1 }, completion: {})
     }
 
     static func resize(to size: CGSize, duration: TimeInterval = 0.3) -> Animation {
-        return Animation(duration: duration, closure: { $0.bounds.size = size })
+        return Animation(duration: duration, closure: { $0.bounds.size = size }, completion: {})
     }
 }
 
@@ -36,6 +37,7 @@ public extension UIView {
         UIView.animate(withDuration: animation.duration, animations: {
             animation.closure(self)
         }, completion: { _ in
+            animation.completion()
             self.animate(animations)
         })
     }
@@ -46,6 +48,14 @@ public extension UIView {
                 animation.closure(self)
             }
         }
+    }
+
+    func animate(loop animations: [Animation]) {
+        let looper = Animation(duration: 0, closure: { _ in }, completion: { [weak self] in
+            self?.animate(loop: animations)
+        })
+
+        animate(animations + [looper])
     }
 }
 
